@@ -2,21 +2,59 @@ import { Plugin } from "@opencode/plugin"
 import { OcRemoteRpc } from "./rpc.js"
 import { Tunnel } from "./tunnel.js"
 
+type Shared = {
+  tunnel: Tunnel
+  refs: number
+}
+
+type Global = typeof globalThis & {
+  __ocRemoteShared?: Shared
+  __ocRemoteSeen?: Set<string>
+}
+
+const global = globalThis as Global
+
+function acquire(url: string, key: string, name?: string): Shared {
+  if (!global.__ocRemoteShared) {
+    const tunnel = new Tunnel({ url, key, name })
+    tunnel.start()
+    global.__ocRemoteShared = { tunnel, refs: 0 }
+  }
+  const state = global.__ocRemoteShared
+  state.refs++
+  return state
+}
+
+function release(state: Shared): void {
+  state.refs--
+  if (state.refs > 0) return
+  state.tunnel.stop()
+  if (global.__ocRemoteShared === state) delete global.__ocRemoteShared
+}
+
+function remember(id: string): boolean {
+  const seen = (global.__ocRemoteSeen ??= new Set<string>())
+  if (seen.has(id)) return false
+  seen.add(id)
+  if (seen.size > 512) {
+    const first = seen.values().next().value
+    if (first !== undefined) seen.delete(first)
+  }
+  return true
+}
+
 export default Plugin.define({
   id: "oc-remote",
   async setup(ctx) {
     const url = typeof ctx.options.url === "string" ? ctx.options.url.trim() : ""
     const key = typeof ctx.options.key === "string" ? ctx.options.key.trim() : ""
     const name = typeof ctx.options.name === "string" ? ctx.options.name : undefined
-    const configured = Boolean(url && key)
-
-    const tunnel = configured ? new Tunnel({ url, key, name }) : null
-    tunnel?.start()
+    const state = url && key ? acquire(url, key, name) : null
 
     const registration = await ctx.rpc.register(OcRemoteRpc, {
       status: async () =>
-        tunnel
-          ? tunnel.status()
+        state
+          ? state.tunnel.status()
           : {
               configured: false,
               online: false,
@@ -26,29 +64,28 @@ export default Plugin.define({
               error: "run npx oc-remote join <url> <key>",
             },
       pair: async () => {
-        if (!tunnel) throw new Error("oc-remote is not configured")
-        return tunnel.mintAndRegister()
+        if (!state) throw new Error("oc-remote is not configured")
+        return state.tunnel.mintAndRegister()
       },
       off: async () => {
-        tunnel?.stop()
+        state?.tunnel.stop()
         return {}
       },
       on: async () => {
-        tunnel?.start()
+        state?.tunnel.start()
         return {}
       },
     })
 
-    let controller: AbortController | null = null
-    if (tunnel) {
-      controller = new AbortController()
+    const controller = state ? new AbortController() : null
+    if (state && controller) {
       void (async () => {
         try {
           for await (const event of ctx.event.subscribe({
             types: ["permission.asked"],
             signal: controller.signal,
           })) {
-            tunnel.notifyPermission(event.data)
+            if (remember(event.id)) state.tunnel.notifyPermission(event.data)
           }
         } catch {}
       })()
@@ -57,7 +94,7 @@ export default Plugin.define({
     return async () => {
       controller?.abort()
       await registration.dispose()
-      tunnel?.stop()
+      if (state) release(state)
     }
   },
 })

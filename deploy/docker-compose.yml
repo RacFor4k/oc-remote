@@ -1,0 +1,44 @@
+name: oc-remote
+
+services:
+  relay:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: oc-remote-relay:0.1.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4097:4097"
+    environment:
+      OC_REMOTE_PUBLIC_URL: "https://rc.addies.ai"
+      OC_REMOTE_LISTEN: "0.0.0.0:4097"
+      OC_REMOTE_ADMIN_LISTEN: "127.0.0.1:4098"
+      OC_REMOTE_DATA_DIR: "/data"
+      OC_REMOTE_VAPID_SUBJECT: "mailto:admin@addies.ai"
+      OC_REMOTE_LOG_LEVEL: "info"
+    volumes:
+      - oc-remote-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 1.0
+    stop_grace_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/oc-remote-relay", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  oc-remote-data:
