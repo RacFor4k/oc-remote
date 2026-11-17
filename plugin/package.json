@@ -29,7 +29,7 @@
     "./rpc": "./src/rpc.ts"
   },
   "bin": {
-    "oc-remote": "./bin/oc-remote.mjs"
+    "oc-remote": "bin/oc-remote.mjs"
   },
   "files": [
     "src",
