@@ -10,6 +10,7 @@
 
   const button = document.createElement("button")
   button.textContent = "Remote"
+  button.id = "ocr-fab"
   button.setAttribute("aria-label", "oc-remote")
   button.style.cssText = [
     "position:fixed", "right:12px", "bottom:88px", "z-index:2147483647",
@@ -46,6 +47,6 @@
     if (e.origin === location.origin && e.data === "ocr-close") overlay.style.display = "none"
   })
 
-  document.documentElement.appendChild(overlay)
-  document.documentElement.appendChild(button)
+  document.body.appendChild(overlay)
+  document.body.appendChild(button)
 })()
