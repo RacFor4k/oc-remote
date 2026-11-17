@@ -1,0 +1,37 @@
+{
+  "name": "oc-remote",
+  "version": "0.1.0",
+  "description": "Remote control of a local OpenCode v2 server through a self-hosted relay",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RacFor4k/oc-remote.git"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./tui": "./src/tui.ts",
+    "./rpc": "./src/rpc.ts"
+  },
+  "bin": {
+    "oc-remote": "./bin/oc-remote.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md"
+  ],
+  "dependencies": {
+    "@opencode/plugin": "2.2.5",
+    "jsonc-parser": "^3.3.1"
+  },
+  "devDependencies": {
+    "@opencode/client": "2.2.5",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/config-edit.test.ts test/local.test.ts test/join.test.ts"
+  }
+}
