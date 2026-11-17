@@ -322,3 +322,37 @@ approved but not required for this image.
   shows "link used, mint a new one".
 - Multi-device UI selection is out of scope; each browser session is bound to
   one device.
+
+## 15. Verification (2026-11-17)
+
+Environment: OpenCode 2.2.5, Windows laptop, addiesVPS (Docker 29, Compose
+v5.7), nginx + Let's Encrypt, relay 0.1.0.
+
+Automated:
+
+- Go: `go test ./...` — fake tunnel device, pair, cookie, HTML injection,
+  Basic token, 401 renewal, SSE, agents, agent switch, logout, admin, single
+  use, wrong key.
+- Plugin: 12 Node tests — config edit (comments, replacement, removal), service
+  helpers, XDG state, full `join`/`leave` against a mock relay; `tsc --noEmit`.
+
+End to end (local relay + temporary OpenCode server with the real plugin):
+
+- Plugin state `active`; tunnel `online`; `hello` carries `vadim`/`laptop`.
+- Pair minted through the RPC; official web UI rendered at 390×844; the
+  injected Remote button is in the DOM at the bottom-right; no console errors.
+- The panel iframe shows tenant/device/online/sessions/push and all actions.
+- Session creation through the relay and directly both return `data.id`;
+  `POST /_ocr/api/agent` and the direct switch both return 204.
+- Logout: 204, then the cookie gets 401.
+- CSP from OpenCode allows the same-origin injection (`script-src 'self'`).
+
+Production:
+
+- `https://rc.addies.ai/_ocr/healthz` returns `{"ok":true,"version":"0.1.0"}`.
+- Tenant `vadim`/`laptop` is online; a real pair link produced a browser session
+  (`SESS 1`) and the laptop UI opened.
+
+Not exercised: a real permission prompt and Web Push delivery; the TUI dialog
+in a real TTY (the TUI feature is active and typechecked).
+
