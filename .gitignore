@@ -1,0 +1,5 @@
+/data/
+*.exe
+node_modules/
+plugin/*.tgz
+.DS_Store
