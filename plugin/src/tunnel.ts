@@ -85,7 +85,7 @@ export class Tunnel {
       url: normalizeBase(this.opts.url),
       device: this.device,
       tenant: this.tenant,
-      error: this.lastError || undefined,
+      error: this.lastError,
     }
   }
 
