@@ -44,6 +44,15 @@ test("keeps comments and formatting", () => {
   assert.deepEqual(parse(out).plugins, [entry])
 })
 
+test("replaces a file package with the same relay url", () => {
+  const src = `{"plugins":[{"package":"file:///D:/Source/oc-remote/plugin","options":{"url":"https://rc.example","key":"old"}}]}`
+  const out = upsertPlugin(src, "oc-remote", { package: "oc-remote", options: { url: "https://rc.example", key: "new" } })
+  const json = parse(out)
+  assert.equal(json.plugins.length, 1)
+  assert.equal(json.plugins[0].package, "oc-remote")
+  assert.equal(json.plugins[0].options.key, "new")
+})
+
 test("removes the entry and leaves the rest", () => {
   const src = `{"plugins":["@acme/a",{"package":"oc-remote","options":{}}]}`
   const out = removePlugin(src, "oc-remote")

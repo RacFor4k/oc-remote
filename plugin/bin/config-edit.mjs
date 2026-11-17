@@ -16,10 +16,11 @@ function clean(text) {
   return text.replace(/^\uFEFF/, "")
 }
 
-function matches(entry, pkg) {
+function matches(entry, pkg, url) {
   if (typeof entry === "string") return entry === pkg || entry.startsWith(pkg + "@")
-  if (entry && typeof entry === "object" && typeof entry.package === "string") {
-    return entry.package === pkg
+  if (entry && typeof entry === "object") {
+    if (typeof entry.package === "string" && entry.package === pkg) return true
+    if (url && entry.options && entry.options.url === url) return true
   }
   return false
 }
@@ -35,10 +36,11 @@ export function upsertPlugin(text, pkg, entry) {
   const node = findNodeAtLocation(tree, ["plugins"])
   const plugins = node ? getNodeValue(node) : undefined
   const opts = options(source)
+  const url = entry && typeof entry === "object" && entry.options ? entry.options.url : undefined
   let edits
 
   if (Array.isArray(plugins)) {
-    const index = plugins.findIndex((item) => matches(item, pkg))
+    const index = plugins.findIndex((item) => matches(item, pkg, url))
     const target = index >= 0 ? index : plugins.length
     edits = modify(source, ["plugins", target], entry, opts)
   } else {
