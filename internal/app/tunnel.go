@@ -33,7 +33,7 @@ func (a *App) handleTunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ws.SetReadLimit(64 << 20)
-	c := tunnel.NewConn(ws, dev.ID, ten.ID, a.ver, a.hub)
+	c := tunnel.NewConn(ws, dev.ID, ten.ID, dev.Name, ten.Name, a.ver, a.hub)
 	_ = a.store.TouchDevice(dev.ID)
 	a.log.Info("tunnel online", "tenant", ten.Name, "device", dev.Name)
 	c.Serve(r.Context())

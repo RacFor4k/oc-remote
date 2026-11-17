@@ -126,6 +126,8 @@ type Conn struct {
 	ws       *websocket.Conn
 	DeviceID string
 	TenantID string
+	Device   string
+	Tenant   string
 	Version  string
 	hub      *Hub
 
@@ -137,11 +139,13 @@ type Conn struct {
 	closeOnce sync.Once
 }
 
-func NewConn(ws *websocket.Conn, deviceID, tenantID, version string, hub *Hub) *Conn {
+func NewConn(ws *websocket.Conn, deviceID, tenantID, device, tenant, version string, hub *Hub) *Conn {
 	return &Conn{
 		ws:       ws,
 		DeviceID: deviceID,
 		TenantID: tenantID,
+		Device:   device,
+		Tenant:   tenant,
 		Version:  version,
 		hub:      hub,
 		pending:  make(map[uint64]*pending),
@@ -157,7 +161,7 @@ func (c *Conn) Serve(ctx context.Context) {
 	defer c.shutdown()
 	go c.ping(ctx)
 
-	if err := c.Send(ctx, Frame{T: "hello", Device: c.DeviceID, Tenant: c.TenantID, Version: c.Version}); err != nil {
+	if err := c.Send(ctx, Frame{T: "hello", Device: c.Device, Tenant: c.Tenant, Version: c.Version}); err != nil {
 		return
 	}
 	for {
