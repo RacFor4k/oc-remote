@@ -1,7 +1,7 @@
 # oc-remote — specification
 
 Remote control of a local OpenCode v2 server from a phone or browser, through a
-self-hosted relay on addiesVPS. Multi-tenant, pair-code auth, push on permission
+self-hosted relay on a VPS. Multi-tenant, pair-code auth, push on permission
 requests. Target: OpenCode 2.2.x, Linux relay, Windows/macOS/Linux plugin.
 
 ## 1. Goals
@@ -276,7 +276,7 @@ CREATE TABLE push_subs(
 
 ## 11. Deployment
 
-1. DNS: `rc.addies.ai A 62.83.87.93` (owner action; API access not required).
+1. DNS: `rc.addies.ai A <vps-ip>` (owner action; API access not required).
 2. TLS: `certbot certonly --webroot -w /opt/mailcow-dockerized/data/web -d rc.addies.ai`
    (verified: port 80 serves `/.well-known/acme-challenge/` for any Host).
 3. nginx: new `rc.addies.ai` server block, `proxy_pass http://127.0.0.1:4097`,
@@ -288,8 +288,8 @@ CREATE TABLE push_subs(
 5. `docker compose exec relay oc-remote-relay admin add alice`.
 6. Install the plugin on the laptop: `npx oc-remote join ...`, then `/remote`.
 
-The VPS is a production host (mailcow, addy.ai). Do not touch existing
-containers, ports 80/25-series/8000/5432/6379, or the mailcow nginx. The relay
+The VPS is a production host (mailcow, other services). Do not touch existing
+containers or the mailcow nginx. The relay
 is a new tiny container behind the existing host nginx. Disk cleanup is
 approved but not required for this image.
 
@@ -325,7 +325,7 @@ approved but not required for this image.
 
 ## 15. Verification (2026-11-17)
 
-Environment: OpenCode 2.2.5, Windows laptop, addiesVPS (Docker 29, Compose
+Environment: OpenCode 2.2.5, Windows laptop, the VPS (Docker 29, Compose
 v5.7), nginx + Let's Encrypt, relay 0.1.0.
 
 Automated:
@@ -338,7 +338,7 @@ Automated:
 
 End to end (local relay + temporary OpenCode server with the real plugin):
 
-- Plugin state `active`; tunnel `online`; `hello` carries `vadim`/`laptop`.
+- Plugin state `active`; tunnel `online`; `hello` carries the tenant/device names.
 - Pair minted through the RPC; official web UI rendered at 390×844; the
   injected Remote button is in the DOM at the bottom-right; no console errors.
 - The panel iframe shows tenant/device/online/sessions/push and all actions.
@@ -350,7 +350,7 @@ End to end (local relay + temporary OpenCode server with the real plugin):
 Production:
 
 - `https://rc.addies.ai/_ocr/healthz` returns `{"ok":true,"version":"0.1.0"}`.
-- Tenant `vadim`/`laptop` is online; a real pair link produced a browser session
+- A real tenant/device is online; a real pair link produced a browser session
   (`SESS 1`) and the laptop UI opened.
 
 Not exercised: a real permission prompt and Web Push delivery; the TUI dialog

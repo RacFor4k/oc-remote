@@ -1,15 +1,17 @@
 # Deploy
 
-Target: addiesVPS (`62.83.87.93`, root). Existing host nginx owns 443; port 80
-is mailcow's nginx. The relay listens on `127.0.0.1:4097` and is proxied by a new
-`rc.addies.ai` server block. Nothing else on the host is touched.
+Target: a VPS with Docker, host nginx, and a mailcow-style nginx on port 80.
+Existing host nginx owns 443; the relay listens on `127.0.0.1:4097` and is
+proxied by a new `rc.addies.ai` server block. Replace `rc.addies.ai` with your
+domain in the compose file, the nginx config and the install script. Nothing
+else on the host is touched.
 
 ## 1. DNS
 
-At Spaceship add:
+At your DNS provider add:
 
 ```
-rc.addies.ai A 62.83.87.93
+rc.addies.ai A <vps-ip>
 ```
 
 Wait until `nslookup rc.addies.ai` returns the VPS address.
@@ -19,14 +21,14 @@ Wait until `nslookup rc.addies.ai` returns the VPS address.
 From the repo root:
 
 ```sh
-ssh addiesVPS "mkdir -p /opt/oc-remote"
-scp -r go.mod go.sum cmd internal web deploy .dockerignore addiesVPS:/opt/oc-remote/
+ssh root@<vps> "mkdir -p /opt/oc-remote"
+scp -r go.mod go.sum cmd internal web deploy .dockerignore root@<vps>:/opt/oc-remote/
 ```
 
 ## 3. Container
 
 ```sh
-ssh addiesVPS
+ssh root@<vps>
 cd /opt/oc-remote
 docker compose -f deploy/docker-compose.yml up -d --build
 docker compose -f deploy/docker-compose.yml ps
@@ -38,12 +40,15 @@ The relay stores SQLite, VAPID keys, `secret.key` and `admin.token` in the
 
 ## 4. Certificate
 
-Port 80 is served by mailcow's nginx; its webroot works for any Host (verified).
+Port 80 is served by mailcow's nginx; its webroot works for any Host.
 
 ```sh
 certbot certonly --webroot -w /opt/mailcow-dockerized/data/web \
-  -d rc.addies.ai --non-interactive --agree-tos --email racfor4@gmail.com
+  -d rc.addies.ai --non-interactive --agree-tos --email admin@example.com
 ```
+
+On a host without mailcow, use any webroot that serves
+`/.well-known/acme-challenge/` for the domain, or DNS-01.
 
 ## 5. nginx
 
@@ -56,7 +61,7 @@ curl -s https://rc.addies.ai/_ocr/healthz
 
 ```sh
 cd /opt/oc-remote
-docker compose exec -T relay /usr/local/bin/oc-remote-relay admin add vadim --device laptop
+docker compose exec -T relay /usr/local/bin/oc-remote-relay admin add alice --device alice-laptop
 ```
 
 The command prints the device key and the `npx oc-remote join ...` one-liner.
@@ -71,7 +76,7 @@ Before the npm package is published, use the local package:
 
 ```sh
 node plugin/bin/oc-remote.mjs join https://rc.addies.ai <key> \
-  --package file:///D:/Source/oc-remote/plugin --name laptop
+  --package file:///path/to/oc-remote/plugin --name laptop
 ```
 
 Then run `/remote` in the OpenCode TUI; the link is copied to the clipboard.
@@ -84,4 +89,4 @@ Then run `/remote` in the OpenCode TUI; the link is copied to the clipboard.
 - The relay's admin API is loopback-only inside the container.
 - nginx access logs are off for `rc.addies.ai`, so pair codes never land in
   the access log; the relay logs metadata only.
-- Do not touch `addy`, `mailcow`, AdGuard or the GPU routers on this host.
+- Do not touch existing containers or the mailcow nginx on a production host.
