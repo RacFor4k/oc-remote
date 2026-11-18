@@ -405,8 +405,44 @@ func TestRelayFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := readAll(t, resp)
+	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "Connect this device") {
+		t.Fatalf("pair page: %d %s", resp.StatusCode, body)
+	}
+
+	// Link previews and chat bots fetch the URL; that must not burn the code.
+	for i := 0; i < 2; i++ {
+		resp, err = client.Get(relay.URL + "/_ocr/pair/" + code)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("preview fetch %d: status %d", i, resp.StatusCode)
+		}
+	}
+
+	pairReq, _ := http.NewRequest(http.MethodPost, relay.URL+"/_ocr/pair/"+code, nil)
+	pairReq.Header.Set("Origin", relay.URL)
+	pairReq.Header.Set("Sec-Fetch-Site", "same-origin")
+	noFollow := &http.Client{Jar: jar, CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	resp, err = noFollow.Do(pairReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("pair redeem: status %d", resp.StatusCode)
+	}
+
+	resp, err = client.Get(relay.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body = readAll(t, resp)
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("pair: status %d", resp.StatusCode)
+		t.Fatalf("root after pair: status %d", resp.StatusCode)
 	}
 	if !strings.Contains(body, "/_ocr/inject.js") {
 		t.Fatalf("html was not injected: %s", body)
@@ -587,6 +623,22 @@ func TestPairSingleUse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("pair page: status %d", resp.StatusCode)
+	}
+
+	post := func() *http.Response {
+		t.Helper()
+		req, _ := http.NewRequest(http.MethodPost, relay.URL+"/_ocr/pair/"+code, nil)
+		req.Header.Set("Origin", relay.URL)
+		res, err := noFollow.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res
+	}
+	resp = post()
 	if resp.StatusCode != http.StatusFound {
 		t.Fatalf("pair: status %d", resp.StatusCode)
 	}

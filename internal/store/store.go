@@ -386,6 +386,26 @@ func (s *Store) CreatePairCode(codeHash []byte, deviceID string, expiresAt int64
 	return err
 }
 
+func (s *Store) CheckPairCode(codeHash []byte, now int64) error {
+	var expiresAt int64
+	var usedAt sql.NullInt64
+	err := s.db.QueryRow(`SELECT expires_at,used_at FROM pair_codes WHERE code_hash=?`, codeHash).
+		Scan(&expiresAt, &usedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if usedAt.Valid {
+		return ErrUsed
+	}
+	if expiresAt <= now {
+		return ErrExpired
+	}
+	return nil
+}
+
 func (s *Store) ConsumePairCode(codeHash []byte, now int64) (string, error) {
 	tx, err := s.db.Begin()
 	if err != nil {

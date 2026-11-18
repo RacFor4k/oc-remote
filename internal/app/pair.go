@@ -17,20 +17,71 @@ import (
 )
 
 func (a *App) handlePair(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	switch r.Method {
+	case http.MethodGet, http.MethodHead:
+		a.pairConfirm(w, r)
+	case http.MethodPost:
+		a.pairRedeemRequest(w, r)
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
 	}
+}
+
+func pairCodeFrom(r *http.Request) (string, bool) {
 	code := strings.TrimPrefix(r.URL.Path, "/_ocr/pair/")
 	if code == "" || strings.Contains(code, "/") {
-		a.errorPage(w, http.StatusNotFound, "Link not valid",
-			"This pair link expired, was already used, or never existed. Mint a new one from <code>/remote</code>.")
+		return "", false
+	}
+	return code, true
+}
+
+func (a *App) invalidLink(w http.ResponseWriter) {
+	a.errorPage(w, http.StatusNotFound, "Link not valid",
+		"This pair link expired, was already used, or never existed. Mint a new one from <code>/remote</code>.")
+}
+
+// pairConfirm shows a page instead of redeeming the code right away. Chat apps
+// and link previews fetch every shared URL; an immediate redeem on GET burns
+// the single-use code before the person can tap it.
+func (a *App) pairConfirm(w http.ResponseWriter, r *http.Request) {
+	code, ok := pairCodeFrom(r)
+	if !ok {
+		a.invalidLink(w)
+		return
+	}
+	if err := a.store.CheckPairCode(secret.Hash([]byte(code)), time.Now().Unix()); err != nil {
+		a.invalidLink(w)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Security-Policy",
+		"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; base-uri 'none'")
+	fmt.Fprint(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect oc-remote</title><style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f1115;color:#e6e8ee;font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:420px;width:100%;margin:16px;padding:28px;border:1px solid #272c36;border-radius:16px;background:#171a21;text-align:center}
+h1{margin:0 0 10px;font-size:20px}p{margin:0 0 20px;color:#aab1c0}
+button{width:100%;padding:14px 18px;border:0;border-radius:12px;background:#34d399;color:#0b0f14;font:600 16px/1 ui-sans-serif,system-ui,sans-serif;cursor:pointer}
+</style></head><body><main><h1>Connect this device</h1><p>Continue to open your OpenCode sessions.</p><form method="post" id="pair"><button type="submit">Continue</button></form></main><script>var f=document.getElementById("pair");if(f)f.requestSubmit()</script></body></html>`)
+}
+
+func (a *App) pairRedeemRequest(w http.ResponseWriter, r *http.Request) {
+	code, ok := pairCodeFrom(r)
+	if !ok {
+		a.invalidLink(w)
+		return
+	}
+	if o := r.Header.Get("Origin"); o != "" && !sameOrigin(o, r.Host) {
+		a.errorPage(w, http.StatusForbidden, "Wrong origin", "Open this link directly, not from another site.")
+		return
+	}
+	if strings.EqualFold(r.Header.Get("Sec-Fetch-Site"), "cross-site") {
+		a.errorPage(w, http.StatusForbidden, "Wrong origin", "Open this link directly, not from another site.")
 		return
 	}
 	deviceID, err := a.store.ConsumePairCode(secret.Hash([]byte(code)), time.Now().Unix())
 	if err != nil {
-		a.errorPage(w, http.StatusNotFound, "Link not valid",
-			"This pair link expired, was already used, or never existed. Mint a new one from <code>/remote</code>.")
+		a.invalidLink(w)
 		return
 	}
 	conn := a.hub.Get(deviceID)
