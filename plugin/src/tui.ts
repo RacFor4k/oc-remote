@@ -52,7 +52,7 @@ export default Plugin.define({
               if (!status.configured) {
                 await context.ui.dialog.alert({
                   title: "oc-remote",
-                  message: "Not configured. Run on this machine:\n\nnpx oc-remote join <url> <key>",
+                  message: "Not configured. Run on this machine:\n\nnpx @racfor/oc-remote join <url> <key>",
                 })
                 return
               }

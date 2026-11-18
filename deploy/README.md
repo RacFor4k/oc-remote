@@ -64,15 +64,15 @@ cd /opt/oc-remote
 docker compose exec -T relay /usr/local/bin/oc-remote-relay admin add alice --device alice-laptop
 ```
 
-The command prints the device key and the `npx oc-remote join ...` one-liner.
+The command prints the device key and the `npx @racfor/oc-remote join ...` one-liner.
 
 ## 7. Laptop
 
 ```sh
-npx oc-remote join https://rc.addies.ai <key>
+npx @racfor/oc-remote join https://rc.addies.ai <key>
 ```
 
-Before the npm package is published, use the local package:
+For development against a local checkout, point `--package` at the folder:
 
 ```sh
 node plugin/bin/oc-remote.mjs join https://rc.addies.ai <key> \

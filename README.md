@@ -69,11 +69,11 @@ docker compose -f deploy/docker-compose.yml exec -T relay \
 The command prints:
 
 ```
-join: npx oc-remote join https://rc.addies.ai ocr_...
+join: npx @racfor/oc-remote join https://rc.addies.ai ocr_...
 ```
 
-The colleague runs that command on their laptop. Until the npm package is
-published, the author uses the local package:
+The colleague runs that command on their laptop. For development against a
+local checkout, point `--package` at the folder instead:
 
 ```sh
 node plugin/bin/oc-remote.mjs join https://rc.addies.ai <key> \
@@ -143,6 +143,5 @@ deploy/                 Dockerfile, compose, nginx, install script
   service worker and relay fan-out are implemented.
 - The TUI `/remote` dialog and clipboard copy are typechecked and the TUI part
   loads, but they were not driven in a real TTY during the automated e2e.
-- The npm package is not published; `npx oc-remote` works after `npm publish`.
 - Multi-device selection for one tenant is not exposed in the UI; each browser
   session is bound to the device that minted the link.

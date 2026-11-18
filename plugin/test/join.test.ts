@@ -54,7 +54,7 @@ test("join writes the plugin entry, leave removes it", async () => {
     const config = JSON.parse(await readFile(configPath, "utf8"))
     assert.equal(config.plugins.length, 1)
     assert.deepEqual(config.plugins[0], {
-      package: "oc-remote",
+      package: "@racfor/oc-remote",
       options: { url: relay.url, key: "ocr_test", name: "laptop" },
     })
 

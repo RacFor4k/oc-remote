@@ -5,7 +5,7 @@ import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 import { removePlugin, upsertPlugin } from "./config-edit.mjs"
 
-const DEFAULT_PACKAGE = "oc-remote"
+const DEFAULT_PACKAGE = "@racfor/oc-remote"
 
 async function main() {
   const args = process.argv.slice(2)

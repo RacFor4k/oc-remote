@@ -1,5 +1,5 @@
 {
-  "name": "oc-remote",
+  "name": "@racfor/oc-remote",
   "version": "0.1.0",
   "description": "Remote control of a local OpenCode v2 server through a self-hosted relay",
   "type": "module",

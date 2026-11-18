@@ -109,7 +109,7 @@ func (a *App) adminAdd(w http.ResponseWriter, r *http.Request) {
 		"tenant": ten.Name,
 		"device": dev.Name,
 		"key":    key,
-		"join":   fmt.Sprintf("npx oc-remote join %s %s", a.cfg.PublicURL, key),
+		"join":   fmt.Sprintf("npx @racfor/oc-remote join %s %s", a.cfg.PublicURL, key),
 	})
 }
 
@@ -176,7 +176,7 @@ func (a *App) adminRotate(w http.ResponseWriter, r *http.Request) {
 		"tenant": ten.Name,
 		"device": dev.Name,
 		"key":    key,
-		"join":   fmt.Sprintf("npx oc-remote join %s %s", a.cfg.PublicURL, key),
+		"join":   fmt.Sprintf("npx @racfor/oc-remote join %s %s", a.cfg.PublicURL, key),
 	})
 }
 

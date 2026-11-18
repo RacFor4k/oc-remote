@@ -10,7 +10,7 @@ tunnel.
 The relay administrator creates a tenant and a device key. On the laptop:
 
 ```sh
-npx oc-remote join https://your-relay.example ocr_...
+npx @racfor/oc-remote join https://your-relay.example ocr_...
 ```
 
 The command verifies the relay and the key, then adds one entry to the global
@@ -20,7 +20,7 @@ The command verifies the relay and the key, then adds one entry to the global
 {
   "plugins": [
     {
-      "package": "oc-remote",
+      "package": "@racfor/oc-remote",
       "options": { "url": "https://your-relay.example", "key": "ocr_..." }
     }
   ]

@@ -61,7 +61,7 @@ export default Plugin.define({
               url: "",
               device: "",
               tenant: "",
-              error: "run npx oc-remote join <url> <key>",
+              error: "run npx @racfor/oc-remote join <url> <key>",
             },
       pair: async () => {
         if (!state) throw new Error("oc-remote is not configured")

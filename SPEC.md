@@ -62,7 +62,7 @@ $ oc-remote-relay admin add alice --device alice-laptop
 tenant: alice
 device: alice-laptop
 key:    ocr_...
-join:   npx oc-remote join https://rc.addies.ai ocr_...
+join:   npx @racfor/oc-remote join https://rc.addies.ai ocr_...
 ```
 
 `join`:
@@ -286,7 +286,7 @@ CREATE TABLE push_subs(
 4. `docker compose up -d --build` in `/opt/oc-remote`; volume `./data:/data`;
    only `127.0.0.1:4097` published; admin port stays inside the container.
 5. `docker compose exec relay oc-remote-relay admin add alice`.
-6. Install the plugin on the laptop: `npx oc-remote join ...`, then `/remote`.
+6. Install the plugin on the laptop: `npx @racfor/oc-remote join ...`, then `/remote`.
 
 The VPS is a production host (mailcow, other services). Do not touch existing
 containers or the mailcow nginx. The relay
